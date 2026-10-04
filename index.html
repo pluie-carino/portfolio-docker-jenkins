@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Home | Portfolio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <h2 class="logo">Neha</h2>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="skills.html">Skills</a>
+      <a href="projects.html">Portfolio</a>
+      <a href="contact.html">Contact</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-left">
+      <h1>Hi, I'm <span>Neha S N</span></h1>
+      <h2>And I'm <span class = "typing"></span></h2>
+      <script>
+  const roles = [
+    "Web Designer",
+    "Machine Learning Engineer",
+    "Cloud Enthusiast"
+  ];
+
+  let roleIndex = 0;
+  let charIndex = 0;
+  let isDeleting = false;
+  const typingElement = document.querySelector(".typing");
+
+  function typeEffect() {
+    const currentRole = roles[roleIndex];
+    if (!isDeleting) {
+      typingElement.textContent = currentRole.substring(0, charIndex++);
+      if (charIndex > currentRole.length) {
+        setTimeout(() => isDeleting = true, 1000);
+      }
+    } else {
+      typingElement.textContent = currentRole.substring(0, charIndex--);
+      if (charIndex === 0) {
+        isDeleting = false;
+        roleIndex = (roleIndex + 1) % roles.length;
+      }
+    }
+    setTimeout(typeEffect, isDeleting ? 60 : 100);
+  }
+
+  typeEffect();
+</script>
+
+      <p>
+       I build modern, user-friendly web experiences while leveraging machine learning to create intelligent solutions and cloud technologies to deploy them at scale. I enjoy turning ideas into impactful digital products that are efficient, scalable, and reliable.
+      </p>
+
+      <div class="hero-buttons">
+        <a href="assets/NEHA S N.pdf" class="btn" download>Download CV</a>
+        <a href="contact.html" class="btn secondary">Hire Me</a>
+      </div>
+
+      
+    </div>
+  </section>
+
+</body>
+</html>
