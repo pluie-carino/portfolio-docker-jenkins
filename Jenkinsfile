@@ -55,22 +55,26 @@
             }
         }
 
-        stage('Build Docker Image') {
-            steps {
-                bat 'docker build -t portfolio-website:latest .'
-            }
+        stage('Login to GHCR') {
+    steps {
+        withCredentials([usernamePassword(
+            credentialsId: 'gcrtoken',
+            usernameVariable: 'GHCR_USER',
+            passwordVariable: 'GHCR_TOKEN'
+        )]) {
+            bat 'echo %GHCR_TOKEN%| docker login ghcr.io -u %GHCR_USER% --password-stdin'
         }
+    }
+}
 
-        stage('Stop Old Container') {
-            steps {
-                bat 'docker rm -f portfolio-container || exit 0'
-            }
-        }
+stage('Build Docker Image') {
+    steps {
+        bat 'docker build -t ghcr.io/pluie-carino/portfolio-docker-jenkins:latest .'
+    }
+}
 
-        stage('Run New Container') {
-            steps {
-                bat 'docker run -d -p 8081:80 --name portfolio-container portfolio-website:latest'
-            }
-        }
+stage('Push Docker Image') {
+    steps {
+        bat 'docker push ghcr.io/pluie-carino/portfolio-docker-jenkins:latest'
     }
 }
