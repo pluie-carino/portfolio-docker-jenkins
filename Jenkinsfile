@@ -22,6 +22,17 @@
             }
         }
 
+     stage('Check Free Tier Instance Types') {
+    steps {
+        withCredentials([[
+            $class: 'AmazonWebServicesCredentialsBinding',
+            credentialsId: 'aws-terraform'
+        ]]) {
+            bat 'aws ec2 describe-instance-types --region ap-south-1 --filters Name=free-tier-eligible,Values=true --query "InstanceTypes[].InstanceType" --output table'
+        }
+    }
+}
+
         stage('Terraform Plan') {
             steps {
                 withCredentials([[
