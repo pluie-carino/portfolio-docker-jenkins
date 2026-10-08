@@ -78,3 +78,5 @@ stage('Push Docker Image') {
         bat 'docker push ghcr.io/pluie-carino/portfolio-docker-jenkins:latest'
     }
 }
+    }
+ }
