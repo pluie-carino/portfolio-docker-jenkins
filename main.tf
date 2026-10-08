@@ -145,7 +145,7 @@ resource "aws_instance" "web" {
   ami = var.ami_id
 
   # EC2 instance type
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
 
   # Put EC2 inside our public subnet
   subnet_id = aws_subnet.public.id
