@@ -12,7 +12,7 @@ terraform {
 # =========================
 
 provider "aws" {
-  region = south.ap-1
+  region = var.aws_region
 }
 
 
