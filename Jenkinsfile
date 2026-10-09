@@ -58,7 +58,7 @@
      
 
 
-```groovy
+
 stage('Login to GHCR') {
     steps {
         withCredentials([usernamePassword(
@@ -66,7 +66,7 @@ stage('Login to GHCR') {
             usernameVariable: 'GHCR_USER',
             passwordVariable: 'GHCR_TOKEN'
         )]) {
-            powershell '''
+            powershell 
                 if ([string]::IsNullOrWhiteSpace($env:GHCR_USER)) {
                     throw "GHCR username is empty"
                 }
