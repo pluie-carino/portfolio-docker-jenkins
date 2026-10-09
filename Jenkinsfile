@@ -57,6 +57,7 @@
 
      
 
+
 stage('Login to GHCR') {
     steps {
         withCredentials([usernamePassword(
@@ -65,7 +66,18 @@ stage('Login to GHCR') {
             passwordVariable: 'GHCR_TOKEN'
         )]) {
             powershell '''
+                if ([string]::IsNullOrWhiteSpace($env:GHCR_USER)) {
+                    throw "GHCR username is empty"
+                }
+                if ([string]::IsNullOrWhiteSpace($env:GHCR_TOKEN)) {
+                    throw "GHCR token is empty"
+                }
+
+                Write-Host "GHCR username is present."
+                Write-Host "GHCR token is present."
+
                 $env:GHCR_TOKEN | docker login ghcr.io --username $env:GHCR_USER --password-stdin
+
                 if ($LASTEXITCODE -ne 0) {
                     exit $LASTEXITCODE
                 }
@@ -73,6 +85,7 @@ stage('Login to GHCR') {
         }
     }
 }
+
 
 
 
