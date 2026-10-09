@@ -58,6 +58,7 @@
      
 
 
+```groovy
 stage('Login to GHCR') {
     steps {
         withCredentials([usernamePassword(
@@ -69,36 +70,32 @@ stage('Login to GHCR') {
                 if ([string]::IsNullOrWhiteSpace($env:GHCR_USER)) {
                     throw "GHCR username is empty"
                 }
+
                 if ([string]::IsNullOrWhiteSpace($env:GHCR_TOKEN)) {
                     throw "GHCR token is empty"
                 }
 
-                Write-Host "GHCR username is present."
+                Write-Host "GHCR username: $env:GHCR_USER"
                 Write-Host "GHCR token is present."
+
+                $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:GHCR_TOKEN)
+                $sha = [System.Security.Cryptography.SHA256]::Create()
+                try {
+                    $fingerprint = [System.BitConverter]::ToString(
+                        $sha.ComputeHash($bytes)
+                    ).Replace('-', '')
+                    Write-Host "GHCR token fingerprint: $fingerprint"
+                }
+                finally {
+                    $sha.Dispose()
+                }
 
                 $env:GHCR_TOKEN | docker login ghcr.io --username $env:GHCR_USER --password-stdin
 
                 if ($LASTEXITCODE -ne 0) {
                     exit $LASTEXITCODE
                 }
-            '''
+           
         }
     }
 }
-
-
-
-
-stage('Build Docker Image') {
-    steps {
-        bat 'docker build -t ghcr.io/pluie-carino/portfolio-docker-jenkins:latest .'
-    }
-}
-
-stage('Push Docker Image') {
-    steps {
-        bat 'docker push ghcr.io/pluie-carino/portfolio-docker-jenkins:latest'
-    }
-}
-    }
- }
