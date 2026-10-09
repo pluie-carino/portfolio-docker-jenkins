@@ -56,6 +56,7 @@
         }
 
      
+
 stage('Login to GHCR') {
     steps {
         withCredentials([usernamePassword(
@@ -63,13 +64,16 @@ stage('Login to GHCR') {
             usernameVariable: 'GHCR_USER',
             passwordVariable: 'GHCR_TOKEN'
         )]) {
-            bat '''
-                @echo off
-                echo %GHCR_TOKEN%| docker login ghcr.io -u "%GHCR_USER%" --password-stdin
+            powershell '''
+                $env:GHCR_TOKEN | docker login ghcr.io --username $env:GHCR_USER --password-stdin
+                if ($LASTEXITCODE -ne 0) {
+                    exit $LASTEXITCODE
+                }
             '''
         }
     }
 }
+
 
 
 stage('Build Docker Image') {
