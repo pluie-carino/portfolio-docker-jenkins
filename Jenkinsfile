@@ -1,8 +1,7 @@
- pipeline {
+pipeline {
     agent any
 
     stages {
-
         stage('Clone Repository') {
             steps {
                 git branch: 'main',
@@ -22,16 +21,16 @@
             }
         }
 
-     stage('Check Free Tier Instance Types') {
-    steps {
-        withCredentials([[
-            $class: 'AmazonWebServicesCredentialsBinding',
-            credentialsId: 'aws-terraform'
-        ]]) {
-            bat 'aws ec2 describe-instance-types --region ap-south-1 --filters Name=free-tier-eligible,Values=true --query "InstanceTypes[].InstanceType" --output table'
+        stage('Check Free Tier Instance Types') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-terraform'
+                ]]) {
+                    bat 'aws ec2 describe-instance-types --region ap-south-1 --filters Name=free-tier-eligible,Values=true --query "InstanceTypes[].InstanceType" --output table'
+                }
+            }
         }
-    }
-}
 
         stage('Terraform Plan') {
             steps {
@@ -55,50 +54,60 @@
             }
         }
 
-     
+        stage('Login to GHCR') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'gcrtoken',
+                    usernameVariable: 'GHCR_USER',
+                    passwordVariable: 'GHCR_TOKEN'
+                )]) {
+                    powershell(
+                        script: '''
+                            if ([string]::IsNullOrWhiteSpace($env:GHCR_USER)) {
+                                throw "GHCR username is empty"
+                            }
 
+                            if ([string]::IsNullOrWhiteSpace($env:GHCR_TOKEN)) {
+                                throw "GHCR token is empty"
+                            }
 
+                            Write-Host "GHCR username: $env:GHCR_USER"
+                            Write-Host "GHCR token is present."
 
-stage('Login to GHCR') {
-    steps {
-        withCredentials([usernamePassword(
-            credentialsId: 'gcrtoken',
-            usernameVariable: 'GHCR_USER',
-            passwordVariable: 'GHCR_TOKEN'
-        )]) {
-            powershell(
-                script: '''
-                    if ([string]::IsNullOrWhiteSpace($env:GHCR_USER)) {
-                        throw "GHCR username is empty"
-                    }
+                            $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:GHCR_TOKEN)
+                            $sha = [System.Security.Cryptography.SHA256]::Create()
 
-                    if ([string]::IsNullOrWhiteSpace($env:GHCR_TOKEN)) {
-                        throw "GHCR token is empty"
-                    }
+                            try {
+                                $fingerprint = [System.BitConverter]::ToString(
+                                    $sha.ComputeHash($bytes)
+                                ).Replace('-', '')
+                                Write-Host "GHCR token fingerprint: $fingerprint"
+                            }
+                            finally {
+                                $sha.Dispose()
+                            }
 
-                    Write-Host "GHCR username: $env:GHCR_USER"
-                    Write-Host "GHCR token is present."
+                            $env:GHCR_TOKEN | docker login ghcr.io --username $env:GHCR_USER --password-stdin
 
-                    $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:GHCR_TOKEN)
-                    $sha = [System.Security.Cryptography.SHA256]::Create()
+                            if ($LASTEXITCODE -ne 0) {
+                                exit $LASTEXITCODE
+                            }
+                        '''
+                    )
+                }
+            }
+        }
 
-                    try {
-                        $fingerprint = [System.BitConverter]::ToString(
-                            $sha.ComputeHash($bytes)
-                        ).Replace('-', '')
-                        Write-Host "GHCR token fingerprint: $fingerprint"
-                    }
-                    finally {
-                        $sha.Dispose()
-                    }
+        stage('Build Docker Image') {
+            steps {
+                bat 'docker build -t ghcr.io/pluie-carino/portfolio-docker-jenkins:latest .'
+            }
+        }
 
-                    $env:GHCR_TOKEN | docker login ghcr.io --username $env:GHCR_USER --password-stdin
-
-                    if ($LASTEXITCODE -ne 0) {
-                        exit $LASTEXITCODE
-                    }
-                '''
-            )
+        stage('Push Docker Image') {
+            steps {
+                bat 'docker push ghcr.io/pluie-carino/portfolio-docker-jenkins:latest'
+            }
         }
     }
 }
