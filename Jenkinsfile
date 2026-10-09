@@ -55,17 +55,22 @@
             }
         }
 
-        stage('Login to GHCR') {
+     
+stage('Login to GHCR') {
     steps {
         withCredentials([usernamePassword(
             credentialsId: 'gcrtoken',
             usernameVariable: 'GHCR_USER',
             passwordVariable: 'GHCR_TOKEN'
         )]) {
-            bat 'echo %GHCR_TOKEN%| docker login ghcr.io -u %GHCR_USER% --password-stdin'
+            bat '''
+                @echo off
+                echo %GHCR_TOKEN%| docker login ghcr.io -u "%GHCR_USER%" --password-stdin
+            '''
         }
     }
 }
+
 
 stage('Build Docker Image') {
     steps {
