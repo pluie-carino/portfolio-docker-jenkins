@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -63,28 +64,24 @@ pipeline {
                 )]) {
                     powershell(
                         script: '''
-                            if ([string]::IsNullOrWhiteSpace($env:GHCR_USER)) {
-                                throw "GHCR username is empty"
-                            }
+                            Write-Host "=== Jenkins Docker diagnostics ==="
 
-                            if ([string]::IsNullOrWhiteSpace($env:GHCR_TOKEN)) {
+                            whoami
+                            Write-Host "USERPROFILE: $env:USERPROFILE"
+                            Write-Host "DOCKER_CONFIG: $env:DOCKER_CONFIG"
+
+                            where.exe docker
+                            docker context show
+                            docker version
+
+                            Write-Host "=== Testing GHCR login ==="
+                            Write-Host "Username: $env:GHCR_USER"
+
+                            $tokenPresent = -not [string]::IsNullOrWhiteSpace($env:GHCR_TOKEN)
+                            Write-Host "Token is present: $tokenPresent"
+
+                            if (-not $tokenPresent) {
                                 throw "GHCR token is empty"
-                            }
-
-                            Write-Host "GHCR username: $env:GHCR_USER"
-                            Write-Host "GHCR token is present."
-
-                            $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:GHCR_TOKEN)
-                            $sha = [System.Security.Cryptography.SHA256]::Create()
-
-                            try {
-                                $fingerprint = [System.BitConverter]::ToString(
-                                    $sha.ComputeHash($bytes)
-                                ).Replace('-', '')
-                                Write-Host "GHCR token fingerprint: $fingerprint"
-                            }
-                            finally {
-                                $sha.Dispose()
                             }
 
                             $env:GHCR_TOKEN | docker login ghcr.io --username $env:GHCR_USER --password-stdin
