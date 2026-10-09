@@ -66,36 +66,39 @@ stage('Login to GHCR') {
             usernameVariable: 'GHCR_USER',
             passwordVariable: 'GHCR_TOKEN'
         )]) {
-            powershell 
-                if ([string]::IsNullOrWhiteSpace($env:GHCR_USER)) {
-                    throw "GHCR username is empty"
-                }
+            powershell(
+                script: '''
+                    if ([string]::IsNullOrWhiteSpace($env:GHCR_USER)) {
+                        throw "GHCR username is empty"
+                    }
 
-                if ([string]::IsNullOrWhiteSpace($env:GHCR_TOKEN)) {
-                    throw "GHCR token is empty"
-                }
+                    if ([string]::IsNullOrWhiteSpace($env:GHCR_TOKEN)) {
+                        throw "GHCR token is empty"
+                    }
 
-                Write-Host "GHCR username: $env:GHCR_USER"
-                Write-Host "GHCR token is present."
+                    Write-Host "GHCR username: $env:GHCR_USER"
+                    Write-Host "GHCR token is present."
 
-                $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:GHCR_TOKEN)
-                $sha = [System.Security.Cryptography.SHA256]::Create()
-                try {
-                    $fingerprint = [System.BitConverter]::ToString(
-                        $sha.ComputeHash($bytes)
-                    ).Replace('-', '')
-                    Write-Host "GHCR token fingerprint: $fingerprint"
-                }
-                finally {
-                    $sha.Dispose()
-                }
+                    $bytes = [System.Text.Encoding]::UTF8.GetBytes($env:GHCR_TOKEN)
+                    $sha = [System.Security.Cryptography.SHA256]::Create()
 
-                $env:GHCR_TOKEN | docker login ghcr.io --username $env:GHCR_USER --password-stdin
+                    try {
+                        $fingerprint = [System.BitConverter]::ToString(
+                            $sha.ComputeHash($bytes)
+                        ).Replace('-', '')
+                        Write-Host "GHCR token fingerprint: $fingerprint"
+                    }
+                    finally {
+                        $sha.Dispose()
+                    }
 
-                if ($LASTEXITCODE -ne 0) {
-                    exit $LASTEXITCODE
-                }
-           
+                    $env:GHCR_TOKEN | docker login ghcr.io --username $env:GHCR_USER --password-stdin
+
+                    if ($LASTEXITCODE -ne 0) {
+                        exit $LASTEXITCODE
+                    }
+                '''
+            )
         }
     }
 }
